@@ -61,8 +61,18 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libx11-dev libxext-dev libxi-dev libxtst-dev
 
-    - name: Install cargo-bundle (macOS only)
+    - name: Cache cargo-bundle
       if: matrix.os == 'macos-latest'
+      uses: actions/cache@v4
+      id: cache-cargo-bundle
+      with:
+        path: ~/.cargo/bin/cargo-bundle
+        key: ${{ runner.os }}-cargo-bundle-v1
+        restore-keys: |
+          ${{ runner.os }}-cargo-bundle-
+
+    - name: Install cargo-bundle (macOS only)
+      if: matrix.os == 'macos-latest' && steps.cache-cargo-bundle.outputs.cache-hit != 'true'
       run: cargo install cargo-bundle
 
     - name: Build binary
@@ -70,11 +80,7 @@ jobs:
 
     - name: Create macOS app bundle
       if: matrix.os == 'macos-latest'
-      run: |
-        cargo bundle --release --target ${{ matrix.target }}
-
-        cd target/${{ matrix.target }}/release/bundle/osx/
-        tar -czf ../../../../../clicker-${{ matrix.artifact_name }}-bundle.tar.gz Clicker.app/
+      run: cargo bundle --release --target ${{ matrix.target }}
 
     - name: Prepare artifacts (Windows/Linux)
       if: matrix.os != 'macos-latest'
@@ -100,7 +106,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}-app-bundle
-        path: clicker-${{ matrix.artifact_name }}-bundle.tar.gz
+        path: target/${{ matrix.target }}/release/bundle/osx/Clicker.app/
         retention-days: 30
 
   test:
