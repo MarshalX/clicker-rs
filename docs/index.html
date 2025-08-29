@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker - Universal Autoclicker</title>
+    <meta name="description"
+          content="A free and open-source cross-platform autoclicker built with Rust. Features CPS mode, jitter mode, global hotkeys, and modern GUI.">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: relative;
+            width: 100%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .github-link {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .github-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        main {
+            margin-top: 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0 6rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin: 0.5rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .download-section {
+            background: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .features {
+            background: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .demo-section {
+            background: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .demo-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+
+        .demo-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 2rem 0;
+        }
+
+        .modes-section {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            padding: 4rem 0;
+        }
+
+        .modes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .mode-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mode-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer {
+            background: #333;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .features h2,
+            .demo-section h2 {
+                font-size: 2rem;
+            }
+        }
+
+        .scroll-animation {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .scroll-animation.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <a href="#" class="logo">🖱️ Clicker</a>
+            <a href="https://github.com/MarshalX/clicker-rs" class="github-link" target="_blank">View on GitHub</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <h1>Universal Autoclicker</h1>
+            <p class="subtitle">A free and open-source cross-platform autoclicker built with Rust</p>
+            <div>
+                <span class="badge">🦀 Built with Rust</span>
+                <span class="badge">🆓 Free & Open Source</span>
+                <span class="badge">🔧 Cross Platform</span>
+                <span class="badge">🎯 Precise Control</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="download-section">
+        <div class="container">
+            <h2>Download Now</h2>
+            <p>Get the latest version from GitHub Releases</p>
+            <a href="https://github.com/MarshalX/clicker-rs/releases" class="download-btn" target="_blank">
+                📥 Download from GitHub Releases
+            </a>
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Use this autoclicker responsibly and ethically. Many online games and
+                services have rules against automation tools. Always check and comply with the terms of service and
+                rules of any game or application before using automation software.
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="scroll-animation">Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">🖥️</div>
+                    <h3>Cross-Platform</h3>
+                    <p>Works seamlessly on Windows, macOS, and Linux. Built with Rust for maximum performance and
+                        reliability.</p>
+                </div>
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Two Delay Modes</h3>
+                    <p>Choose between CPS mode for consistent timing or Jitter mode for randomized, human-like clicking
+                        patterns.</p>
+                </div>
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Global Hotkeys</h3>
+                    <p>Configurable hotkeys (F1-F12, A-Z) for quick start/stop control from anywhere on your system.</p>
+                </div>
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Safety Features</h3>
+                    <p>Built-in input validation, minimum delay enforcement, and error handling for safe operation.</p>
+                </div>
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Precise Control</h3>
+                    <p>Set exact clicks per second (CPS) or customize delay ranges with millisecond precision.</p>
+                </div>
+                <div class="feature-card scroll-animation">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Modern GUI</h3>
+                    <p>Clean, intuitive interface built with Iced framework. Real-time status updates and visual
+                        feedback.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="demo-section">
+        <div class="container">
+            <h2 class="scroll-animation">See It In Action</h2>
+            <p class="scroll-animation">Simple and intuitive interface for powerful automation</p>
+            <img src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo.png"
+                 alt="Clicker Demo Screenshot" class="demo-image scroll-animation">
+        </div>
+    </section>
+
+    <section class="modes-section">
+        <div class="container">
+            <h2 class="scroll-animation" style="text-align: center;">Delay Modes</h2>
+            <div class="modes-grid">
+                <div class="mode-card scroll-animation">
+                    <h3>🎯 CPS Mode (Clicks Per Second)</h3>
+                    <ul>
+                        <li><strong>Constant timing:</strong> Consistent, predictable click intervals</li>
+                        <li><strong>Easy configuration:</strong> Simply set desired clicks per second</li>
+                        <li><strong>Automatic conversion:</strong> CPS converted to milliseconds automatically</li>
+                        <li><strong>Use case:</strong> Perfect for steady, uniform clicking tasks</li>
+                    </ul>
+                </div>
+                <div class="mode-card scroll-animation">
+                    <h3>🎲 Jitter Mode (Random Delay)</h3>
+                    <ul>
+                        <li><strong>Variable timing:</strong> Random delay within your specified range</li>
+                        <li><strong>Anti-detection:</strong> Mimics human-like clicking patterns</li>
+                        <li><strong>Customizable range:</strong> Set minimum and maximum delay values</li>
+                        <li><strong>Use case:</strong> Ideal for avoiding detection patterns</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>🖱️ Clicker</h3>
+                <p>Free and open-source autoclicker built with Rust. Cross-platform, safe, and powerful.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Links</h3>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/MarshalX/clicker-rs" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://github.com/MarshalX/clicker-rs/releases" target="_blank">Download Releases</a>
+                    </li>
+                    <li><a href="https://github.com/MarshalX/clicker-rs/issues" target="_blank">Report Issues</a></li>
+                    <li><a href="https://github.com/MarshalX/clicker-rs/blob/main/LICENSE" target="_blank">MIT
+                        License</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Technology</h3>
+                <ul class="footer-links">
+                    <li><a href="https://www.rust-lang.org/" target="_blank">Rust Language</a></li>
+                    <li><a href="https://github.com/iced-rs/iced" target="_blank">Iced GUI Framework</a></li>
+                    <li><a href="https://github.com/enigo-rs/enigo" target="_blank">Enigo Input Simulation</a></li>
+                </ul>
+            </div>
+        </div>
+        <div style="border-top: 1px solid #555; padding-top: 2rem; margin-top: 2rem;">
+            <p>&copy; 2025 clicker.rs. Licensed under MIT License. This software is intended for educational purposes
+                and legitimate automation needs.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">Users are responsible for ensuring their use
+                complies with the terms of service of any games or applications.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Smooth scroll animation for elements coming into view
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+
+    // Observe all scroll animation elements
+    document.querySelectorAll('.scroll-animation').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>
