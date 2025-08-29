@@ -121,7 +121,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         cargo bundle --release --target ${{ matrix.target }}
-        create-dmg target/${{ matrix.target }}/release/bundle/osx/Clicker.app --overwrite
+        create-dmg target/${{ matrix.target }}/release/bundle/osx/Clicker.app --overwrite --identity="-" || true
         # Rename the auto-generated DMG to match our artifact naming convention
         mv "Clicker "*.dmg "${{ matrix.artifact_name }}.dmg"
 
