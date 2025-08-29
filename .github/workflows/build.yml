@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}
+    name: Build ${{ matrix.os }} (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -73,13 +73,8 @@ jobs:
       run: |
         cargo bundle --release --target ${{ matrix.target }}
 
-        if [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
-          cd target/${{ matrix.target }}/release/bundle/osx/
-          tar -czf ../../../../../clicker-macos-x64-bundle.tar.gz Clicker.app/
-        else
-          cd target/${{ matrix.target }}/release/bundle/osx/
-          tar -czf ../../../../../clicker-macos-arm64-bundle.tar.gz Clicker.app/
-        fi
+        cd target/${{ matrix.target }}/release/bundle/osx/
+        tar -czf ../../../../../clicker-${{ matrix.artifact_name }}-bundle.tar.gz Clicker.app/
 
     - name: Prepare artifacts (Windows/Linux)
       if: matrix.os != 'macos-latest'
