@@ -80,7 +80,10 @@ jobs:
 
     - name: Create macOS app bundle
       if: matrix.os == 'macos-latest'
-      run: cargo bundle --release --target ${{ matrix.target }}
+      run: |
+        cargo bundle --release --target ${{ matrix.target }}
+        cd target/${{ matrix.target }}/release/bundle/osx/
+        zip -r ../../../../../clicker-${{ matrix.artifact_name }}-bundle.zip Clicker.app/
 
     - name: Prepare artifacts (Windows/Linux)
       if: matrix.os != 'macos-latest'
@@ -106,7 +109,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact_name }}-app-bundle
-        path: target/${{ matrix.target }}/release/bundle/osx/Clicker.app/
+        path: clicker-${{ matrix.artifact_name }}-bundle.zip
         retention-days: 30
 
   test:
