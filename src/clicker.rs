@@ -57,7 +57,7 @@ impl Clicker {
 
     pub fn get_delay_info(&self) -> String {
         match self.config.delay_mode {
-            DelayMode::CPS => {
+            DelayMode::Cps => {
                 format!("{:.1} CPS", self.config.cps)
             }
             DelayMode::Jitter => {

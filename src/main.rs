@@ -81,7 +81,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
     match message {
         Message::IntervalChanged(value) => {
             state.click_interval = value.clone();
-            if let Err(e) = state.clicker.config_mut().from_string(&value) {
+            if let Err(e) = state.clicker.config_mut().parse_interval_string(&value) {
                 state.status_message = e;
             } else if !state.clicker.is_running() {
                 state.status_message = STATUS_READY.to_string();
@@ -95,7 +95,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
         }
         Message::CpsChanged(value) => {
             state.cps_input = value.clone();
-            if let Err(e) = state.clicker.config_mut().from_cps_string(&value) {
+            if let Err(e) = state.clicker.config_mut().parse_cps_string(&value) {
                 state.status_message = e;
             } else if !state.clicker.is_running() {
                 state.status_message = STATUS_READY.to_string();
@@ -147,8 +147,12 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 state.status_message = STATUS_STOPPED.to_string();
             } else {
                 let config_valid = match state.clicker.config().delay_mode {
-                    DelayMode::CPS => {
-                        match state.clicker.config_mut().from_cps_string(&state.cps_input) {
+                    DelayMode::Cps => {
+                        match state
+                            .clicker
+                            .config_mut()
+                            .parse_cps_string(&state.cps_input)
+                        {
                             Ok(_) => true,
                             Err(e) => {
                                 state.status_message = e;
@@ -267,7 +271,7 @@ fn view(state: &State) -> Element<Message> {
     .spacing(UI_SPACING_SMALL);
 
     let delay_config_inputs = match state.clicker.config().delay_mode {
-        DelayMode::CPS => {
+        DelayMode::Cps => {
             let is_valid_cps = state
                 .clicker
                 .config()
@@ -376,7 +380,7 @@ fn view(state: &State) -> Element<Message> {
     .spacing(UI_SPACING_SMALL);
 
     let is_config_valid = match state.clicker.config().delay_mode {
-        DelayMode::CPS => state
+        DelayMode::Cps => state
             .clicker
             .config()
             .is_valid_cps(state.cps_input.parse::<f64>().unwrap_or(0.0)),

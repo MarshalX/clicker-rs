@@ -113,7 +113,7 @@ impl PrecisionTimer {
                     // Click executed successfully - continue silently
                 }
                 Err(e) => {
-                    if let Err(_) = status_sender.send(StatusUpdate::Error(e)) {
+                    if status_sender.send(StatusUpdate::Error(e)).is_err() {
                         break;
                     }
                     break;
@@ -121,7 +121,7 @@ impl PrecisionTimer {
             }
 
             next_target_time = match config.delay_mode {
-                DelayMode::CPS => next_target_time + cps_interval,
+                DelayMode::Cps => next_target_time + cps_interval,
                 DelayMode::Jitter => {
                     let delay = Self::generate_jitter_delay_with_rng(&mut rng, &config);
                     next_target_time + delay
@@ -172,6 +172,12 @@ impl PrecisionTimer {
             ClickButton::Right => Button::Right,
             ClickButton::Middle => Button::Middle,
         }
+    }
+}
+
+impl Default for PrecisionTimer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

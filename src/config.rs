@@ -19,7 +19,7 @@ pub struct ClickerConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DelayMode {
-    CPS,
+    Cps,
     Jitter,
 }
 
@@ -40,7 +40,7 @@ pub enum ClickButton {
 impl std::fmt::Display for DelayMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DelayMode::CPS => write!(f, "CPS (Clicks Per Second)"),
+            DelayMode::Cps => write!(f, "CPS (Clicks Per Second)"),
             DelayMode::Jitter => write!(f, "Jitter (Random Delay)"),
         }
     }
@@ -68,7 +68,7 @@ impl std::fmt::Display for ClickButton {
 
 impl DelayMode {
     pub fn all() -> Vec<DelayMode> {
-        vec![DelayMode::CPS, DelayMode::Jitter]
+        vec![DelayMode::Cps, DelayMode::Jitter]
     }
 }
 
@@ -96,7 +96,7 @@ impl Default for ClickerConfig {
         Self {
             interval_ms: DEFAULT_INTERVAL.parse().unwrap(),
             min_interval_ms: MIN_INTERVAL,
-            delay_mode: DelayMode::CPS,
+            delay_mode: DelayMode::Cps,
             cps: DEFAULT_CPS,
             min_delay_ms: DEFAULT_MIN_DELAY,
             max_delay_ms: DEFAULT_MAX_DELAY,
@@ -115,7 +115,7 @@ impl ClickerConfig {
         interval >= self.min_interval_ms
     }
 
-    pub fn from_string(&mut self, interval_str: &str) -> Result<(), String> {
+    pub fn parse_interval_string(&mut self, interval_str: &str) -> Result<(), String> {
         match interval_str.parse::<u64>() {
             Ok(interval) if self.is_valid_interval(interval) => {
                 self.interval_ms = interval;
@@ -134,7 +134,7 @@ impl ClickerConfig {
         min_delay >= self.min_interval_ms && min_delay <= max_delay
     }
 
-    pub fn from_cps_string(&mut self, cps_str: &str) -> Result<(), String> {
+    pub fn parse_cps_string(&mut self, cps_str: &str) -> Result<(), String> {
         match cps_str.parse::<f64>() {
             Ok(cps) if self.is_valid_cps(cps) => {
                 self.cps = cps;

@@ -55,10 +55,6 @@ impl HotkeyManager {
         &self.combination
     }
 
-    pub fn get_current_hotkey(&self) -> Option<&HotKey> {
-        self.current_hotkey.as_ref()
-    }
-
     pub fn parse_hotkey(combination: &str) -> Result<HotKey, String> {
         HotKey::try_from(combination).map_err(|_| ERROR_HOTKEY_PARSE.to_string())
     }
