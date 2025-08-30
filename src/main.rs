@@ -254,7 +254,7 @@ fn subscription(state: &State) -> Subscription<Message> {
     state.hotkey_manager.create_subscription()
 }
 
-fn view(state: &State) -> Element<Message> {
+fn view(state: &State) -> Element<'_, Message> {
     let title = text(APP_TITLE).size(UI_TITLE_SIZE);
     let subtitle = text(APP_SUBTITLE).size(UI_SUBTITLE_SIZE);
     let status = text(&state.status_message).size(UI_STATUS_SIZE);
