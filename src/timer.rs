@@ -57,7 +57,7 @@ impl PrecisionTimer {
     pub fn stop(&mut self) {
         // Signal the thread to stop
         self.is_running.store(false, Ordering::SeqCst);
-        
+
         if let Some(sender) = &self.command_sender {
             let _ = sender.send(TimerCommand::Stop);
         }
@@ -179,7 +179,7 @@ impl Drop for PrecisionTimer {
     fn drop(&mut self) {
         // Signal the thread to stop using both mechanisms
         self.is_running.store(false, Ordering::SeqCst);
-        
+
         if let Some(sender) = &self.command_sender {
             let _ = sender.send(TimerCommand::Stop);
         }
