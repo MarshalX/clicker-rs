@@ -17,6 +17,7 @@ serde = { version = "1.0", features = ["derive"] }
 global-hotkey = "0.7"
 async-std = "1.13.2"
 rand = "0.9.2"
+crossbeam = "0.8.4"
 
 [package.metadata.bundle]
 name = "Clicker"
@@ -28,3 +29,10 @@ category = "Utility"
 short_description = "Cross-platform autoclicker built with Rust"
 long_description = "A simple and efficient general-purpose autoclicker built with Rust for any game or application"
 osx_minimum_system_version = "10.11"
+
+[profile.release]
+codegen-units = 1
+debug = false
+incremental = false
+lto = true
+opt-level = 3

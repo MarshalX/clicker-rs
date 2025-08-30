@@ -2,6 +2,7 @@ mod clicker;
 mod config;
 mod constants;
 mod hotkey;
+mod timer;
 
 use iced::widget::{button, checkbox, column, container, pick_list, row, text, text_input, Space};
 use iced::{Element, Length, Size, Subscription, Task};
@@ -80,7 +81,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
     match message {
         Message::IntervalChanged(value) => {
             state.click_interval = value.clone();
-            if let Err(e) = state.clicker.config_mut().from_string(&value) {
+            if let Err(e) = state.clicker.config_mut().parse_interval_string(&value) {
                 state.status_message = e;
             } else if !state.clicker.is_running() {
                 state.status_message = STATUS_READY.to_string();
@@ -94,7 +95,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
         }
         Message::CpsChanged(value) => {
             state.cps_input = value.clone();
-            if let Err(e) = state.clicker.config_mut().from_cps_string(&value) {
+            if let Err(e) = state.clicker.config_mut().parse_cps_string(&value) {
                 state.status_message = e;
             } else if !state.clicker.is_running() {
                 state.status_message = STATUS_READY.to_string();
@@ -146,8 +147,12 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 state.status_message = STATUS_STOPPED.to_string();
             } else {
                 let config_valid = match state.clicker.config().delay_mode {
-                    DelayMode::CPS => {
-                        match state.clicker.config_mut().from_cps_string(&state.cps_input) {
+                    DelayMode::Cps => {
+                        match state
+                            .clicker
+                            .config_mut()
+                            .parse_cps_string(&state.cps_input)
+                        {
                             Ok(_) => true,
                             Err(e) => {
                                 state.status_message = e;
@@ -176,7 +181,11 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     state.clicker.start();
                     state.status_message =
                         format!("{} - {}", STATUS_RUNNING, state.clicker.get_delay_info());
-                    return perform_click(state.clicker.clone());
+
+                    return state
+                        .clicker
+                        .create_error_check_task()
+                        .map(Message::ClickerMessage);
                 }
             }
         }
@@ -185,14 +194,17 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             state.status_message = STATUS_RESET.to_string();
         }
         Message::ClickerMessage(clicker_msg) => match clicker_msg {
-            ClickerMessage::Tick => {
-                if state.clicker.is_running() {
-                    return perform_click(state.clicker.clone());
-                }
-            }
             ClickerMessage::ClickError(error) => {
                 state.status_message = format!("Error: {}", error);
                 state.clicker.stop();
+            }
+            ClickerMessage::NoError => {
+                if state.clicker.is_running() {
+                    return state
+                        .clicker
+                        .create_error_check_task()
+                        .map(Message::ClickerMessage);
+                }
             }
         },
         Message::HotkeyChanged(value) => {
@@ -242,13 +254,7 @@ fn subscription(state: &State) -> Subscription<Message> {
     state.hotkey_manager.create_subscription()
 }
 
-fn perform_click(clicker: Clicker) -> Task<Message> {
-    Task::perform(async move { clicker.perform_click().await }, |result| {
-        Message::ClickerMessage(result)
-    })
-}
-
-fn view(state: &State) -> Element<Message> {
+fn view(state: &State) -> Element<'_, Message> {
     let title = text(APP_TITLE).size(UI_TITLE_SIZE);
     let subtitle = text(APP_SUBTITLE).size(UI_SUBTITLE_SIZE);
     let status = text(&state.status_message).size(UI_STATUS_SIZE);
@@ -265,7 +271,7 @@ fn view(state: &State) -> Element<Message> {
     .spacing(UI_SPACING_SMALL);
 
     let delay_config_inputs = match state.clicker.config().delay_mode {
-        DelayMode::CPS => {
+        DelayMode::Cps => {
             let is_valid_cps = state
                 .clicker
                 .config()
@@ -374,7 +380,7 @@ fn view(state: &State) -> Element<Message> {
     .spacing(UI_SPACING_SMALL);
 
     let is_config_valid = match state.clicker.config().delay_mode {
-        DelayMode::CPS => state
+        DelayMode::Cps => state
             .clicker
             .config()
             .is_valid_cps(state.cps_input.parse::<f64>().unwrap_or(0.0)),
