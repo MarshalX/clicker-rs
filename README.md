@@ -2,8 +2,6 @@
 
 A cross-platform autoclicker built with Rust, designed for any game or application. Built using the [Iced](https://github.com/iced-rs/iced) GUI framework and [Enigo](https://github.com/enigo-rs/enigo) for precise mouse emulation.
 
-**Official Website:** [clicker.rs](https://clicker.rs)
-
 > ⚠️ Use this autoclicker responsibly and ethically. Many online games and services have rules against automation tools. Always check and comply with the terms of service and rules of any game or application before using automation software. This tool should only be used where explicitly permitted or in offline/local environments.
 
 ## Features
@@ -42,12 +40,27 @@ The autoclicker supports two distinct delay modes to suit different use cases:
 - **Customizable range**: Set minimum and maximum delay values (e.g., 100ms - 500ms)
 - **Use case**: Ideal for scenarios where you want to avoid detection patterns
 
-## Prerequisites
+## Installation
+
+### Download Pre-built Releases
+
+The easiest way to get started is to download a pre-built binary from the [GitHub Releases page](https://github.com/MarshalX/clicker-rs/releases). 
+
+Available for:
+- **macOS**: Universal binary and app bundle
+- **Windows**: Executable binary
+- **Linux**: Binary for common distributions
+
+Simply download the appropriate file for your platform and run it directly.
+
+### Build from Source
+
+If you prefer to build from source or need to customize the application:
+
+#### Prerequisites
 
 - Rust 1.70+ (install from [rustup.rs](https://rustup.rs/))
 - On macOS: Xcode Command Line Tools
-
-## Building and Running
 
 ### Clone and Build
 ```bash
@@ -72,18 +85,36 @@ On macOS, the application requires accessibility permissions to simulate mouse c
 4. Add **Clicker** to the list of allowed applications
 5. Restart the application
 
-### Building macOS App Bundle
-For a proper macOS app bundle with correct permissions:
+### Security & Gatekeeper Issues
 
+When running unsigned applications on macOS, you may encounter security warnings. Here are solutions for common issues:
+
+#### "Application is Damaged and Can't Be Opened"
+
+If you see this error message, it's usually due to macOS quarantine attributes. Fix it by running:
 ```bash
-# Install cargo-bundle
-cargo install cargo-bundle
-
-# Build the app bundle
-cargo bundle --release
+xattr -c /path/to/Clicker.app
+```
+For example:
+```bash
+xattr -c ./target/release/bundle/osx/Clicker.app
 ```
 
-The app bundle will be created in `target/release/bundle/osx/Clicker.app`
+#### "Cannot Open Because Developer Cannot Be Verified"
+For unsigned applications, macOS will show this warning on first launch:
+
+1. **First attempt**: Try to open the app normally - you'll get the warning dialog
+2. **Go to System Settings**: Open **System Settings** → **Privacy & Security**
+3. **Find the blocked app**: Scroll down to the "Security" section where you'll see a message about the blocked application
+4. **Click "Open Anyway"**: Click the **"Open Anyway"** button next to the app warning
+5. **Confirm**: In the confirmation dialog, click **"Open"** to permanently allow the application
+
+Alternative method:
+1. **Right-click** the application in Finder
+2. **Hold Option key** and select **"Open"** from the context menu
+3. **Click "Open"** in the dialog to confirm
+
+These steps only need to be done once.
 
 ## Usage
 
@@ -134,71 +165,9 @@ The app bundle will be created in `target/release/bundle/osx/Clicker.app`
 - **Error handling**: Clear error messages for troubleshooting
 - **Visual feedback**: Status messages and validation indicators
 
-## Development
-
-### Project Structure
-```
-clicker/
-├── src/
-│   ├── main.rs          # UI layer and application coordination
-│   ├── clicker.rs       # Core clicking logic with CPS and jitter support
-│   ├── config.rs        # Delay modes, validation, and configuration management
-│   ├── hotkey.rs        # Global hotkey detection and management
-│   ├── constants.rs     # UI text, sizes, and application constants
-│   └── lib.rs           # Library interface for the core functionality
-├── assets/
-│   └── Info.plist       # macOS app metadata and permissions
-├── Cargo.toml           # Project dependencies and metadata
-└── README.md            # This file
-```
-
-### Dependencies
-- **iced**: Cross-platform GUI framework
-- **enigo**: Cross-platform mouse and keyboard simulation
-- **global-hotkey**: Cross-platform global hotkey detection
-- **rand**: Random number generation for jitter mode
-
-### Building for Different Platforms
-
-#### macOS
-```bash
-# Regular binary
-cargo build --release --target x86_64-apple-darwin
-# or for Apple Silicon:
-cargo build --release --target aarch64-apple-darwin
-
-# macOS App Bundle (requires cargo-bundle)
-cargo install cargo-bundle
-cargo bundle --release
-```
-
-#### Windows (Cross-compilation from macOS)
-```bash
-# Install cross-compilation toolchain (one-time setup)
-brew install mingw-w64
-rustup target add x86_64-pc-windows-gnu
-
-# Build
-cargo build --release --target x86_64-pc-windows-gnu
-```
-
-#### Linux
-```bash
-# Install cross-compilation toolchain (one-time setup)
-brew install SergioBenitez/osxct/x86_64-unknown-linux-gnu
-rustup target add x86_64-unknown-linux-gnu
-
-# Build (may fail due to GUI dependencies)
-cargo build --release --target x86_64-unknown-linux-gnu
-```
-
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions to the Clicker project! For detailed information on how to contribute, including development setup, building for different platforms, and project structure, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Legal Notice
 
