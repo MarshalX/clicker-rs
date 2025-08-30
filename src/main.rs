@@ -177,7 +177,11 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     state.clicker.start();
                     state.status_message =
                         format!("{} - {}", STATUS_RUNNING, state.clicker.get_delay_info());
-                    return perform_click(state.clicker.clone());
+
+                    return state
+                        .clicker
+                        .create_error_check_task()
+                        .map(Message::ClickerMessage);
                 }
             }
         }
@@ -186,18 +190,16 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             state.status_message = STATUS_RESET.to_string();
         }
         Message::ClickerMessage(clicker_msg) => match clicker_msg {
-            ClickerMessage::Tick => {
-                if state.clicker.is_running() {
-                    return perform_click(state.clicker.clone());
-                }
-            }
             ClickerMessage::ClickError(error) => {
                 state.status_message = format!("Error: {}", error);
                 state.clicker.stop();
             }
-            ClickerMessage::NoUpdate => {
+            ClickerMessage::NoError => {
                 if state.clicker.is_running() {
-                    return perform_click_with_delay(state.clicker.clone());
+                    return state
+                        .clicker
+                        .create_error_check_task()
+                        .map(Message::ClickerMessage);
                 }
             }
         },
@@ -246,25 +248,6 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
 
 fn subscription(state: &State) -> Subscription<Message> {
     state.hotkey_manager.create_subscription()
-}
-
-fn perform_click(clicker: Clicker) -> Task<Message> {
-    Task::perform(async move { clicker.perform_click().await }, |result| {
-        Message::ClickerMessage(result)
-    })
-}
-
-fn perform_click_with_delay(clicker: Clicker) -> Task<Message> {
-    Task::perform(
-        async move {
-            // Add a small delay to prevent busy polling when no status updates are available
-            // This reduces CPU usage significantly while still maintaining responsiveness
-            // Using std::thread::sleep in a spawn_blocking to avoid blocking the async runtime
-            std::thread::sleep(std::time::Duration::from_millis(1));
-            clicker.perform_click().await
-        },
-        |result| Message::ClickerMessage(result),
-    )
 }
 
 fn view(state: &State) -> Element<Message> {

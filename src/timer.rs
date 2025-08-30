@@ -14,7 +14,6 @@ pub enum TimerCommand {
 
 #[derive(Debug, Clone)]
 pub enum StatusUpdate {
-    ClickExecuted,
     Error(String),
 }
 
@@ -56,15 +55,15 @@ impl PrecisionTimer {
     }
 
     pub fn stop(&mut self) {
+        // Signal the thread to stop
+        self.is_running.store(false, Ordering::SeqCst);
+        
         if let Some(sender) = &self.command_sender {
             let _ = sender.send(TimerCommand::Stop);
         }
 
-        if let Some(handle) = self.timer_handle.take() {
-            let _ = handle.join();
-        }
-
-        self.is_running.store(false, Ordering::SeqCst);
+        // Don't block the UI thread - let the thread finish naturally
+        // The handle will be cleaned up in the Drop implementation
         self.status_sender = None;
         self.command_sender = None;
     }
@@ -111,14 +110,13 @@ impl PrecisionTimer {
 
             match Self::execute_click_with_enigo(&mut enigo, &config) {
                 Ok(_) => {
-                    if let Err(_) = status_sender.send(StatusUpdate::ClickExecuted) {
-                        break;
-                    }
+                    // Click executed successfully - continue silently
                 }
                 Err(e) => {
                     if let Err(_) = status_sender.send(StatusUpdate::Error(e)) {
                         break;
                     }
+                    break;
                 }
             }
 
@@ -179,6 +177,18 @@ impl PrecisionTimer {
 
 impl Drop for PrecisionTimer {
     fn drop(&mut self) {
-        self.stop();
+        // Signal the thread to stop using both mechanisms
+        self.is_running.store(false, Ordering::SeqCst);
+        
+        if let Some(sender) = &self.command_sender {
+            let _ = sender.send(TimerCommand::Stop);
+        }
+
+        // Don't join the thread to avoid any blocking
+        // The thread will exit naturally when it sees the stop signals
+        // Process cleanup will handle any remaining threads
+        if let Some(_handle) = self.timer_handle.take() {
+            // Just drop the handle - the thread will finish on its own
+        }
     }
 }

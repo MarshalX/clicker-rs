@@ -1,14 +1,14 @@
 use crate::config::{ClickerConfig, DelayMode};
 use crate::timer::{PrecisionTimer, StatusUpdate};
 use crossbeam::channel::Receiver;
+use iced::Task;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum ClickerMessage {
-    Tick,
     ClickError(String),
-    NoUpdate,
+    NoError,
 }
 
 #[derive(Clone)]
@@ -55,25 +55,6 @@ impl Clicker {
         &mut self.config
     }
 
-    pub async fn perform_click(&self) -> ClickerMessage {
-        if !self.is_running() {
-            return ClickerMessage::NoUpdate;
-        }
-
-        if let Some(receiver) = self.status_receiver.lock().unwrap().as_ref() {
-            match receiver.try_recv() {
-                Ok(StatusUpdate::ClickExecuted) => ClickerMessage::Tick,
-                Ok(StatusUpdate::Error(e)) => {
-                    self.is_running.store(false, Ordering::SeqCst);
-                    ClickerMessage::ClickError(e)
-                }
-                Err(_) => ClickerMessage::NoUpdate,
-            }
-        } else {
-            ClickerMessage::NoUpdate
-        }
-    }
-
     pub fn get_delay_info(&self) -> String {
         match self.config.delay_mode {
             DelayMode::CPS => {
@@ -86,5 +67,34 @@ impl Clicker {
                 )
             }
         }
+    }
+
+    pub async fn check_for_errors(&self) -> Option<ClickerMessage> {
+        if let Some(receiver) = self.status_receiver.lock().unwrap().as_ref() {
+            match receiver.try_recv() {
+                Ok(StatusUpdate::Error(e)) => {
+                    self.is_running.store(false, Ordering::SeqCst);
+                    Some(ClickerMessage::ClickError(e))
+                }
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn create_error_check_task(&self) -> Task<ClickerMessage> {
+        let clicker = self.clone();
+        Task::perform(
+            async move {
+                // Small delay to avoid busy polling
+                async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+                clicker
+                    .check_for_errors()
+                    .await
+                    .unwrap_or(ClickerMessage::NoError)
+            },
+            |result| result,
+        )
     }
 }
