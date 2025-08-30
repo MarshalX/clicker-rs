@@ -42,28 +42,6 @@ The autoclicker supports two distinct delay modes to suit different use cases:
 - **Customizable range**: Set minimum and maximum delay values (e.g., 100ms - 500ms)
 - **Use case**: Ideal for scenarios where you want to avoid detection patterns
 
-### Delay Mode Flow Diagram
-
-```mermaid
-graph TD
-    A["User Creates Clicker Config"] --> B{Delay Mode}
-    B -->|CPS Mode| C["Set CPS Value<br/>e.g., 2.5 clicks/sec"]
-    B -->|Jitter Mode| D["Set Min/Max Delays<br/>e.g., 100ms - 500ms"]
-    
-    C --> E["CPS → Milliseconds<br/>delay = 1000 / CPS<br/>2.5 CPS = 400ms"]
-    D --> F["Random Delay<br/>Each click gets random<br/>delay between min-max"]
-    
-    E --> G["Fixed Delay<br/>Consistent timing"]
-    F --> H["Variable Delay<br/>Unpredictable timing"]
-    
-    G --> I["perform_click()"]
-    H --> I
-    
-    I --> J["Execute Click"]
-    J --> K["Sleep for calculated delay"]
-    K --> I
-```
-
 ## Prerequisites
 
 - Rust 1.70+ (install from [rustup.rs](https://rustup.rs/))

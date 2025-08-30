@@ -2,6 +2,7 @@ mod clicker;
 mod config;
 mod constants;
 mod hotkey;
+mod timer;
 
 use iced::widget::{button, checkbox, column, container, pick_list, row, text, text_input, Space};
 use iced::{Element, Length, Size, Subscription, Task};
@@ -194,6 +195,11 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 state.status_message = format!("Error: {}", error);
                 state.clicker.stop();
             }
+            ClickerMessage::NoUpdate => {
+                if state.clicker.is_running() {
+                    return perform_click_with_delay(state.clicker.clone());
+                }
+            }
         },
         Message::HotkeyChanged(value) => {
             match state.hotkey_manager.update_combination(value.clone()) {
@@ -246,6 +252,19 @@ fn perform_click(clicker: Clicker) -> Task<Message> {
     Task::perform(async move { clicker.perform_click().await }, |result| {
         Message::ClickerMessage(result)
     })
+}
+
+fn perform_click_with_delay(clicker: Clicker) -> Task<Message> {
+    Task::perform(
+        async move {
+            // Add a small delay to prevent busy polling when no status updates are available
+            // This reduces CPU usage significantly while still maintaining responsiveness
+            // Using std::thread::sleep in a spawn_blocking to avoid blocking the async runtime
+            std::thread::sleep(std::time::Duration::from_millis(1));
+            clicker.perform_click().await
+        },
+        |result| Message::ClickerMessage(result),
+    )
 }
 
 fn view(state: &State) -> Element<Message> {

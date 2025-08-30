@@ -1,37 +1,50 @@
-use crate::config::{ClickButton, ClickType, ClickerConfig, DelayMode};
-use crate::constants::*;
-use enigo::{Button, Enigo, Mouse, Settings};
+use crate::config::{ClickerConfig, DelayMode};
+use crate::timer::{PrecisionTimer, StatusUpdate};
+use crossbeam::channel::Receiver;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum ClickerMessage {
     Tick,
     ClickError(String),
+    NoUpdate,
 }
 
 #[derive(Clone)]
 pub struct Clicker {
     config: ClickerConfig,
-    is_running: bool,
+    timer: Arc<std::sync::Mutex<PrecisionTimer>>,
+    status_receiver: Arc<std::sync::Mutex<Option<Receiver<StatusUpdate>>>>,
+    is_running: Arc<AtomicBool>,
 }
 
 impl Clicker {
     pub fn new(config: ClickerConfig) -> Self {
         Self {
             config,
-            is_running: false,
+            timer: Arc::new(std::sync::Mutex::new(PrecisionTimer::new())),
+            status_receiver: Arc::new(std::sync::Mutex::new(None)),
+            is_running: Arc::new(AtomicBool::new(false)),
         }
     }
 
     pub fn start(&mut self) {
-        self.is_running = true;
+        let mut timer = self.timer.lock().unwrap();
+        let receiver = timer.start(self.config.clone());
+        *self.status_receiver.lock().unwrap() = Some(receiver);
+        self.is_running.store(true, Ordering::SeqCst);
     }
 
     pub fn stop(&mut self) {
-        self.is_running = false;
+        self.is_running.store(false, Ordering::SeqCst);
+        let mut timer = self.timer.lock().unwrap();
+        timer.stop();
+        *self.status_receiver.lock().unwrap() = None;
     }
 
     pub fn is_running(&self) -> bool {
-        self.is_running
+        self.is_running.load(Ordering::SeqCst)
     }
 
     pub fn config(&self) -> &ClickerConfig {
@@ -42,65 +55,22 @@ impl Clicker {
         &mut self.config
     }
 
-    pub fn update_config(&mut self, config: ClickerConfig) {
-        self.config = config;
-    }
-
     pub async fn perform_click(&self) -> ClickerMessage {
-        if !self.is_running {
-            return ClickerMessage::Tick;
+        if !self.is_running() {
+            return ClickerMessage::NoUpdate;
         }
 
-        match self.execute_click() {
-            Ok(_) => {
-                let delay = self.config.to_duration();
-                std::thread::sleep(delay);
-                ClickerMessage::Tick
+        if let Some(receiver) = self.status_receiver.lock().unwrap().as_ref() {
+            match receiver.try_recv() {
+                Ok(StatusUpdate::ClickExecuted) => ClickerMessage::Tick,
+                Ok(StatusUpdate::Error(e)) => {
+                    self.is_running.store(false, Ordering::SeqCst);
+                    ClickerMessage::ClickError(e)
+                }
+                Err(_) => ClickerMessage::NoUpdate,
             }
-            Err(e) => ClickerMessage::ClickError(e),
-        }
-    }
-
-    fn execute_click(&self) -> Result<(), String> {
-        let mut enigo =
-            Enigo::new(&Settings::default()).map_err(|e| format!("{}: {}", ERROR_ENIGO_INIT, e))?;
-
-        let button = self.get_enigo_button();
-
-        match self.config.click_type {
-            ClickType::Single => {
-                enigo
-                    .button(button, enigo::Direction::Click)
-                    .map_err(|e| format!("{}: {}", ERROR_CLICK_FAILED, e))?;
-            }
-            ClickType::Double => {
-                enigo
-                    .button(button, enigo::Direction::Click)
-                    .map_err(|e| format!("{}: {}", ERROR_CLICK_FAILED, e))?;
-                std::thread::sleep(std::time::Duration::from_millis(50));
-                enigo
-                    .button(button, enigo::Direction::Click)
-                    .map_err(|e| format!("{}: {}", ERROR_CLICK_FAILED, e))?;
-            }
-            ClickType::Hold => {
-                enigo
-                    .button(button, enigo::Direction::Press)
-                    .map_err(|e| format!("{}: {}", ERROR_CLICK_FAILED, e))?;
-                std::thread::sleep(std::time::Duration::from_millis(100));
-                enigo
-                    .button(button, enigo::Direction::Release)
-                    .map_err(|e| format!("{}: {}", ERROR_CLICK_FAILED, e))?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn get_enigo_button(&self) -> Button {
-        match self.config.click_button {
-            ClickButton::Left => Button::Left,
-            ClickButton::Right => Button::Right,
-            ClickButton::Middle => Button::Middle,
+        } else {
+            ClickerMessage::NoUpdate
         }
     }
 

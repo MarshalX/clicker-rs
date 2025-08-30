@@ -126,21 +126,6 @@ impl ClickerConfig {
         }
     }
 
-    pub fn to_duration(&self) -> std::time::Duration {
-        match self.delay_mode {
-            DelayMode::CPS => {
-                let delay_ms = (1000.0 / self.cps) as u64;
-                std::time::Duration::from_millis(delay_ms.max(self.min_interval_ms))
-            }
-            DelayMode::Jitter => {
-                use rand::Rng;
-                let mut rng = rand::rng();
-                let delay_ms = rng.random_range(self.min_delay_ms..=self.max_delay_ms);
-                std::time::Duration::from_millis(delay_ms)
-            }
-        }
-    }
-
     pub fn is_valid_cps(&self, cps: f64) -> bool {
         cps > 0.0 && (1000.0 / cps) >= self.min_interval_ms as f64
     }
