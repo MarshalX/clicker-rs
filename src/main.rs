@@ -2,20 +2,25 @@ mod clicker;
 mod config;
 mod constants;
 mod hotkey;
+mod icons;
 mod timer;
+mod ui;
 
-use iced::widget::{button, checkbox, column, container, pick_list, row, text, text_input, Space};
+use iced::widget::{column, container, row, text};
 use iced::{Element, Length, Size, Subscription, Task};
 
 use clicker::{Clicker, ClickerMessage};
 use config::{ClickButton, ClickType, ClickerConfig, DelayMode};
 use constants::*;
 use hotkey::{HotkeyEvent, HotkeyManager};
+use icons::{Icon, ICONS_FONT};
+use ui::*;
 
 fn main() -> iced::Result {
     iced::application(APP_TITLE, update, view)
         .subscription(subscription)
         .window_size(Size::new(UI_WINDOW_WIDTH, UI_WINDOW_HEIGHT))
+        .font(ICONS_FONT)
         .resizable(false)
         .run_with(new)
 }
@@ -69,6 +74,7 @@ pub enum Message {
     HotkeyEvent(HotkeyEvent),
     ClickButtonChanged(ClickButton),
     ClickTypeChanged(ClickType),
+    WebsiteClick,
 }
 
 impl From<HotkeyEvent> for Message {
@@ -246,6 +252,11 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 state.status_message = STATUS_READY.to_string();
             }
         }
+        Message::WebsiteClick => {
+            if let Err(e) = webbrowser::open(WEBSITE_URL) {
+                state.status_message = format!("Failed to open website: {}", e);
+            }
+        }
     }
     Task::none()
 }
@@ -257,18 +268,27 @@ fn subscription(state: &State) -> Subscription<Message> {
 fn view(state: &State) -> Element<'_, Message> {
     let title = text(APP_TITLE).size(UI_TITLE_SIZE);
     let subtitle = text(APP_SUBTITLE).size(UI_SUBTITLE_SIZE);
-    let status = text(&state.status_message).size(UI_STATUS_SIZE);
 
-    let delay_mode_dropdown = row![
-        text(UI_DELAY_MODE_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-        pick_list(
-            DelayMode::all(),
-            Some(state.clicker.config().delay_mode.clone()),
-            Message::DelayModeChanged
-        )
-        .width(Length::Fixed(UI_INPUT_WIDTH + UI_VALIDATION_WIDTH))
-    ]
-    .spacing(UI_SPACING_SMALL);
+    // rewrite later
+    let status_type =
+        if state.status_message.contains("Error:") || state.status_message.contains("Failed") {
+            StatusType::Error
+        } else if state.status_message.contains("Invalid") || !state.hotkey_manager.is_enabled() {
+            StatusType::Warning
+        } else if state.status_message.contains("running") {
+            StatusType::Info
+        } else {
+            StatusType::Success
+        };
+
+    let status = status_message(status_type, &state.status_message);
+
+    let delay_mode_dropdown = dropdown_row(
+        UI_DELAY_MODE_LABEL,
+        DelayMode::all(),
+        Some(state.clicker.config().delay_mode.clone()),
+        Message::DelayModeChanged,
+    );
 
     let delay_config_inputs = match state.clicker.config().delay_mode {
         DelayMode::Cps => {
@@ -277,20 +297,19 @@ fn view(state: &State) -> Element<'_, Message> {
                 .config()
                 .is_valid_cps(state.cps_input.parse::<f64>().unwrap_or(0.0));
 
-            column![row![
-                text(UI_CPS_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-                text_input(UI_CPS_PLACEHOLDER, &state.cps_input)
-                    .on_input(Message::CpsChanged)
-                    .width(Length::Fixed(UI_INPUT_WIDTH)),
-                text(if is_valid_cps {
-                    UI_INTERVAL_VALID
-                } else {
-                    UI_INTERVAL_INVALID
-                })
-                .size(UI_VALIDATION_SIZE)
-                .width(Length::Fixed(UI_VALIDATION_WIDTH))
-            ]
-            .spacing(UI_SPACING_SMALL)]
+            let validation = validation_indicator(
+                is_valid_cps,
+                UI_INTERVAL_VALID_TEXT,
+                UI_INTERVAL_INVALID_TEXT,
+            );
+
+            column![input_row(
+                UI_CPS_LABEL,
+                UI_CPS_PLACEHOLDER,
+                &state.cps_input,
+                Message::CpsChanged,
+                validation,
+            )]
         }
         DelayMode::Jitter => {
             let min_delay = state.min_delay_input.parse::<u64>().unwrap_or(0);
@@ -300,84 +319,70 @@ fn view(state: &State) -> Element<'_, Message> {
                 .config()
                 .is_valid_jitter_range(min_delay, max_delay);
 
+            let min_validation = validation_indicator(
+                is_valid_jitter && min_delay > 0,
+                UI_INTERVAL_VALID_TEXT,
+                UI_INTERVAL_INVALID_TEXT,
+            );
+            let max_validation = validation_indicator(
+                is_valid_jitter && max_delay > 0,
+                UI_INTERVAL_VALID_TEXT,
+                UI_INTERVAL_INVALID_TEXT,
+            );
+
             column![
-                row![
-                    text(UI_MIN_DELAY_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-                    text_input(UI_MIN_DELAY_PLACEHOLDER, &state.min_delay_input)
-                        .on_input(Message::MinDelayChanged)
-                        .width(Length::Fixed(UI_INPUT_WIDTH)),
-                    text(if is_valid_jitter && min_delay > 0 {
-                        UI_INTERVAL_VALID
-                    } else {
-                        UI_INTERVAL_INVALID
-                    })
-                    .size(UI_VALIDATION_SIZE)
-                    .width(Length::Fixed(UI_VALIDATION_WIDTH))
-                ]
-                .spacing(UI_SPACING_SMALL),
-                Space::with_height(UI_SPACING_SMALL),
-                row![
-                    text(UI_MAX_DELAY_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-                    text_input(UI_MAX_DELAY_PLACEHOLDER, &state.max_delay_input)
-                        .on_input(Message::MaxDelayChanged)
-                        .width(Length::Fixed(UI_INPUT_WIDTH)),
-                    text(if is_valid_jitter && max_delay > 0 {
-                        UI_INTERVAL_VALID
-                    } else {
-                        UI_INTERVAL_INVALID
-                    })
-                    .size(UI_VALIDATION_SIZE)
-                    .width(Length::Fixed(UI_VALIDATION_WIDTH))
-                ]
-                .spacing(UI_SPACING_SMALL)
+                input_row(
+                    UI_MIN_DELAY_LABEL,
+                    UI_MIN_DELAY_PLACEHOLDER,
+                    &state.min_delay_input,
+                    Message::MinDelayChanged,
+                    min_validation,
+                ),
+                input_row(
+                    UI_MAX_DELAY_LABEL,
+                    UI_MAX_DELAY_PLACEHOLDER,
+                    &state.max_delay_input,
+                    Message::MaxDelayChanged,
+                    max_validation,
+                ),
             ]
+            .spacing(UI_SPACING_SMALL)
         }
     };
 
     let is_valid_hotkey = HotkeyManager::is_valid_hotkey(state.hotkey_manager.get_combination());
+    let hotkey_validation = validation_indicator(
+        is_valid_hotkey,
+        UI_HOTKEY_VALID_TEXT,
+        UI_HOTKEY_INVALID_TEXT,
+    );
+    let hotkey_input = input_row(
+        UI_HOTKEY_LABEL,
+        UI_HOTKEY_PLACEHOLDER,
+        state.hotkey_manager.get_combination(),
+        Message::HotkeyChanged,
+        hotkey_validation,
+    );
 
-    let hotkey_input = row![
-        text(UI_HOTKEY_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-        text_input(
-            UI_HOTKEY_PLACEHOLDER,
-            state.hotkey_manager.get_combination()
-        )
-        .on_input(Message::HotkeyChanged)
-        .width(Length::Fixed(UI_INPUT_WIDTH)),
-        text(if is_valid_hotkey {
-            UI_HOTKEY_VALID
-        } else {
-            UI_HOTKEY_INVALID
-        })
-        .size(UI_VALIDATION_SIZE)
-        .width(Length::Fixed(UI_VALIDATION_WIDTH))
-    ]
-    .spacing(UI_SPACING_SMALL);
+    let hotkey_enabled = styled_checkbox(
+        UI_HOTKEY_ENABLED_LABEL,
+        state.hotkey_manager.is_enabled(),
+        Message::HotkeyEnabledChanged,
+    );
 
-    let hotkey_enabled = checkbox(UI_HOTKEY_ENABLED_LABEL, state.hotkey_manager.is_enabled())
-        .on_toggle(Message::HotkeyEnabledChanged);
+    let click_button_dropdown = dropdown_row(
+        UI_CLICK_BUTTON_LABEL,
+        ClickButton::all(),
+        Some(state.clicker.config().click_button.clone()),
+        Message::ClickButtonChanged,
+    );
 
-    let click_button_dropdown = row![
-        text(UI_CLICK_BUTTON_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-        pick_list(
-            ClickButton::all(),
-            Some(state.clicker.config().click_button.clone()),
-            Message::ClickButtonChanged
-        )
-        .width(Length::Fixed(UI_INPUT_WIDTH + UI_VALIDATION_WIDTH))
-    ]
-    .spacing(UI_SPACING_SMALL);
-
-    let click_type_dropdown = row![
-        text(UI_CLICK_TYPE_LABEL).width(Length::Fixed(UI_LABEL_WIDTH)),
-        pick_list(
-            ClickType::all(),
-            Some(state.clicker.config().click_type.clone()),
-            Message::ClickTypeChanged
-        )
-        .width(Length::Fixed(UI_INPUT_WIDTH + UI_VALIDATION_WIDTH))
-    ]
-    .spacing(UI_SPACING_SMALL);
+    let click_type_dropdown = dropdown_row(
+        UI_CLICK_TYPE_LABEL,
+        ClickType::all(),
+        Some(state.clicker.config().click_type.clone()),
+        Message::ClickTypeChanged,
+    );
 
     let is_config_valid = match state.clicker.config().delay_mode {
         DelayMode::Cps => state
@@ -397,53 +402,52 @@ fn view(state: &State) -> Element<'_, Message> {
     };
 
     let start_stop_button = if is_config_valid || state.clicker.is_running() {
-        button(if state.clicker.is_running() {
-            UI_BUTTON_STOP
-        } else {
-            UI_BUTTON_START
-        })
-        .on_press(Message::StartStop)
+        icon_button(
+            if state.clicker.is_running() {
+                Icon::Stop
+            } else {
+                Icon::Play
+            },
+            if state.clicker.is_running() {
+                UI_BUTTON_STOP
+            } else {
+                UI_BUTTON_START
+            },
+            Some(Message::StartStop),
+        )
     } else {
-        button(UI_BUTTON_START)
+        icon_button(Icon::Play, UI_BUTTON_START, None)
     };
 
     let control_buttons = row![
         start_stop_button,
-        button(UI_BUTTON_RESET).on_press(Message::Reset)
+        icon_button(Icon::Reset, UI_BUTTON_RESET, Some(Message::Reset))
     ]
     .spacing(UI_SPACING_MEDIUM);
 
     let content = column![
-        title,
-        subtitle,
-        Space::with_height(UI_SPACING_LARGE),
+        column![title, subtitle].spacing(UI_SPACING_SMALL),
         status,
-        Space::with_height(UI_SPACING_MEDIUM),
-        delay_mode_dropdown,
-        Space::with_height(UI_SPACING_SMALL),
-        delay_config_inputs,
-        Space::with_height(UI_SPACING_SMALL),
-        click_button_dropdown,
-        Space::with_height(UI_SPACING_SMALL),
-        click_type_dropdown,
-        Space::with_height(UI_SPACING_SMALL),
-        hotkey_input,
-        Space::with_height(UI_SPACING_SMALL),
-        hotkey_enabled,
-        Space::with_height(UI_SPACING_MEDIUM),
+        section_header(Icon::Timer, UI_SECTION_DELAY_CONFIG),
+        column![delay_mode_dropdown, delay_config_inputs,].spacing(UI_SPACING_SMALL),
+        section_header(Icon::Click, UI_SECTION_CLICK_CONFIG),
+        column![click_button_dropdown, click_type_dropdown,].spacing(UI_SPACING_SMALL),
+        section_header(Icon::Keyboard, UI_SECTION_HOTKEY_CONFIG),
+        column![hotkey_input, hotkey_enabled].spacing(UI_SPACING_SMALL),
         control_buttons,
-        Space::with_height(UI_SPACING_MEDIUM),
-        text(UI_PERMISSION_NOTE).size(UI_NOTE_SIZE),
-        Space::with_height(UI_SPACING_SMALL),
-        text(UI_WEBSITE_NOTE).size(UI_NOTE_SIZE),
+        column![
+            text(UI_PERMISSION_NOTE).size(UI_NOTE_SIZE),
+            clickable_text(UI_WEBSITE_NOTE, UI_NOTE_SIZE, Message::WebsiteClick),
+        ]
+        .spacing(UI_SPACING_SMALL),
     ]
-    .spacing(UI_SPACING_SMALL);
+    .spacing(UI_SPACING_LARGE);
 
     container(content)
         .width(Length::Fixed(UI_WINDOW_WIDTH))
         .height(Length::Shrink)
         .center_x(Length::Fill)
         .center_y(Length::Shrink)
-        .padding(10)
+        .padding(UI_CONTAINER_PADDING)
         .into()
 }
