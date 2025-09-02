@@ -177,12 +177,40 @@
             color: #333;
         }
 
+        .demo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .demo-item {
+            text-align: center;
+        }
+
+        .demo-item h3 {
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem;
+            color: #333;
+        }
+
+        .demo-item p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
         .demo-image {
             max-width: 100%;
             height: auto;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            margin: 2rem 0;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .demo-image:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
         }
 
         .modes-section {
@@ -273,6 +301,16 @@
             .features h2,
             .demo-section h2 {
                 font-size: 2rem;
+            }
+
+            .demo-gallery {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                margin-top: 2rem;
+            }
+
+            .demo-item h3 {
+                font-size: 1.3rem;
             }
         }
 
@@ -372,8 +410,29 @@
         <div class="container">
             <h2 class="scroll-animation">See It In Action</h2>
             <p class="scroll-animation">Simple and intuitive interface for powerful automation</p>
-            <img src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo.png"
-                 alt="Clicker Demo Screenshot" class="demo-image scroll-animation">
+            
+            <div class="demo-gallery">
+                <div class="demo-item scroll-animation">
+                    <img src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo_cps.png"
+                         alt="CPS Mode Demo" class="demo-image">
+                    <h3>CPS Mode</h3>
+                    <p>Configure precise clicks per second for consistent automation</p>
+                </div>
+                
+                <div class="demo-item scroll-animation">
+                    <img src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo_dark.png"
+                         alt="Dark Theme Interface" class="demo-image">
+                    <h3>Dark Theme</h3>
+                    <p>Elegant dark mode for comfortable extended use</p>
+                </div>
+                
+                <div class="demo-item scroll-animation">
+                    <img src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo_jitter.png"
+                         alt="Jitter Mode Demo" class="demo-image">
+                    <h3>Jitter Mode</h3>
+                    <p>Add randomization to avoid detection and simulate human behavior</p>
+                </div>
+            </div>
         </div>
     </section>
 
