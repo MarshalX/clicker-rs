@@ -6,23 +6,17 @@ A cross-platform autoclicker built with Rust, designed for any game or applicati
 
 ## Features
 
-- ✅ Cross-platform support (Windows, macOS, Linux)
-- ✅ Simple and intuitive GUI interface built with Rust
-- ✅ **Fully functional mouse clicking** with Enigo integration
-- ✅ **Two delay modes**: CPS (Clicks Per Second) and Jitter (Random Delay)
-- ✅ **CPS Mode**: Set exact clicks per second (e.g., 2.5 CPS = 400ms constant delay)
-- ✅ **Jitter Mode**: Random delay between min/max values for unpredictable timing
-- ✅ Configurable click intervals (minimum 10ms)
-- ✅ Simple running/stopped state tracking
-- ✅ Start/Stop controls with validation
-- ✅ Error handling and status messages
-- ✅ macOS accessibility permissions handling
-- ✅ Input validation with visual feedback
-- ✅ **Global hotkey support** with configurable keys
+- 🖱️ **Fully functional mouse clicking** with Enigo integration
+- 🎯 **Two delay modes**: CPS (Clicks Per Second) and Jitter (Random Delay)
+   - **CPS Mode**: Set exact clicks per second (e.g., 2.5 CPS = 400ms constant delay)
+   - **Jitter Mode**: Random delay between min/max values for unpredictable timing
+- ⌨️ **Global hotkey support** with configurable keys
+- 🌙 **Dark theme** for comfortable use in low-light environments
+- 💻 Cross-platform support (Windows, macOS, Linux)
 
 ## Demo
 
-<img alt="Demo of clicker.rs" src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo.png">
+<img alt="Demo of clicker.rs" src="https://github.com/MarshalX/clicker-rs/raw/main/.github/images/demo_dark.png" width="480">
 
 ## Delay Modes
 
@@ -52,27 +46,6 @@ Available for:
 - **Linux**: Binary for common distributions
 
 Simply download the appropriate file for your platform and run it directly.
-
-### Build from Source
-
-If you prefer to build from source or need to customize the application:
-
-#### Prerequisites
-
-- Rust 1.70+ (install from [rustup.rs](https://rustup.rs/))
-- On macOS: Xcode Command Line Tools
-
-### Clone and Build
-```bash
-git clone https://github.com/MarshalX/clicker-rs.git
-cd clicker
-cargo build --release
-```
-
-### Run the Application
-```bash
-cargo run
-```
 
 ## macOS Setup
 
@@ -127,13 +100,13 @@ These steps only need to be done once.
    **For CPS Mode:**
    - Set your desired clicks per second (e.g., 2.5 CPS)
    - The app automatically converts this to delay (2.5 CPS = 400ms delay)
-   - Minimum effective CPS depends on the 10ms safety limit
+   - Minimum effective CPS depends on the 1ms safety limit
    
    **For Jitter Mode:**
    - Set minimum delay (e.g., 100ms)
    - Set maximum delay (e.g., 500ms)
    - Each click will have a random delay between these values
-   - Both values must be at least 10ms for safety
+   - Both values must be at least 1ms for safety
 
 3. **Start Clicking**: Click the "Start" button to begin the autoclicker
    - Button is disabled if the timing configuration is invalid
@@ -155,9 +128,9 @@ These steps only need to be done once.
 
 ### Safety Features
 - **Input validation**: Prevents invalid CPS values, jitter ranges, and invalid hotkeys
-- **Minimum delay enforcement**: All delay modes respect the 10ms minimum safety limit
+- **Minimum delay enforcement**: All delay modes respect the 1ms minimum safety limit
 - **CPS validation**: Prevents CPS values that would result in unsafe intervals
-- **Jitter range validation**: Ensures min ≤ max and both values ≥ 10ms
+- **Jitter range validation**: Ensures min ≤ max and both values ≥ 1ms
 - **Left mouse clicks only**: Safe for most applications
 - **Current cursor position**: Clicks wherever your mouse is positioned
 - **Easy start/stop**: Immediate response for quick disabling via GUI or hotkey

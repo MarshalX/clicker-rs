@@ -1,6 +1,6 @@
 [package]
 name = "clicker"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 authors = ["Ilya (Marshal) <ilya@marshal.dev>"]
 description = "Cross-platform autoclicker built with Rust - clicker.rs"
