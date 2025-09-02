@@ -19,8 +19,10 @@ pub enum Icon {
     Reset, // arrow-clockwise
 
     // UI category icons
+    #[allow(dead_code)]
     Mouse,    // mouse3-fill
     Keyboard, // keyboard-fill
+    #[allow(dead_code)]
     Settings, // gear-fill
     Timer,    // stopwatch-fill
     Click,    // hand-index-fill

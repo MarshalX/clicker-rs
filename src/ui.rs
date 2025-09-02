@@ -31,7 +31,7 @@ pub fn validation_indicator<'a>(
     .into()
 }
 
-pub fn icon_button(icon: Icon, label: &str, message: Option<Message>) -> button::Button<Message> {
+pub fn icon_button(icon: Icon, label: &str, message: Option<Message>) -> button::Button<'_, Message> {
     let content = row![icon_text(icon, ICON_SIZE_BUTTON), text(label)]
         .spacing(UI_SPACING_SMALL)
         .align_y(Alignment::Center);
@@ -67,7 +67,7 @@ pub fn dropdown_row<T>(
     options: Vec<T>,
     selected: Option<T>,
     on_change: fn(T) -> Message,
-) -> Element<Message>
+) -> Element<'_, Message>
 where
     T: std::fmt::Display + Clone + PartialEq + 'static,
 {
@@ -80,7 +80,7 @@ where
     .into()
 }
 
-pub fn section_header(icon: Icon, title: &str) -> Element<Message> {
+pub fn section_header(icon: Icon, title: &str) -> Element<'_, Message> {
     row![
         icon_text(icon, ICON_SIZE_BUTTON),
         text(title).size(UI_SUBTITLE_SIZE)
@@ -114,7 +114,7 @@ impl StatusType {
     }
 }
 
-pub fn status_message(status_type: StatusType, message: &str) -> Element<Message> {
+pub fn status_message(status_type: StatusType, message: &str) -> Element<'_, Message> {
     let color = status_type.color();
     row![
         icon_text(status_type.icon(), ICON_SIZE_SMALL).color(color),
@@ -129,11 +129,11 @@ pub fn styled_checkbox(
     label: &str,
     is_checked: bool,
     on_toggle: fn(bool) -> Message,
-) -> checkbox::Checkbox<Message> {
+) -> checkbox::Checkbox<'_, Message> {
     checkbox(label, is_checked).on_toggle(on_toggle)
 }
 
-pub fn clickable_text(text_content: &str, size: u16, message: Message) -> Element<Message> {
+pub fn clickable_text(text_content: &str, size: u16, message: Message) -> Element<'_, Message> {
     button(text(text_content).size(size))
         .style(|theme: &iced::Theme, status| {
             let palette = theme.extended_palette();
