@@ -31,7 +31,11 @@ pub fn validation_indicator<'a>(
     .into()
 }
 
-pub fn icon_button(icon: Icon, label: &str, message: Option<Message>) -> button::Button<'_, Message> {
+pub fn icon_button(
+    icon: Icon,
+    label: &str,
+    message: Option<Message>,
+) -> button::Button<'_, Message> {
     let content = row![icon_text(icon, ICON_SIZE_BUTTON), text(label)]
         .spacing(UI_SPACING_SMALL)
         .align_y(Alignment::Center);
